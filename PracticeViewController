@@ -1,0 +1,217 @@
+//
+//  PracticeViewController.m
+//  IPresentWellForIPad
+//
+//  Created by infusion on 2/20/14.
+//  Copyright (c) 2014 infusion. All rights reserved.
+//
+
+#import "PracticeViewController.h"
+#import "AnimatedGif.h"
+#import "AppDelegate.h"
+
+//For Camera
+#import <AVFoundation/AVFoundation.h>
+#define DegreesToRadians(x) ((x) * M_PI / 180.0)
+#import "CaptureSessionManager.h"
+
+#import "SpeechClass.h"
+
+@interface PracticeViewController (){
+    
+    //for camera
+    BOOL FrontCamera;
+    AVCaptureSession *session;
+    
+    //for timer
+    NSTimer *timer;
+}
+
+@property (retain) CaptureSessionManager *captureManager;
+
+@end
+
+@implementation PracticeViewController
+
+@synthesize animatedImages,backButton,speechText,blackView;
+
+//for camera
+@synthesize imagePreview, captureImage, stillImageOutput;
+NSArray *devices;
+AVCaptureDevice *frontCamera,*backCamera;
+
+AppDelegate *app;
+SpeechClass *speechObj;
+
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view.
+    
+    speechObj =[app.speecharray objectAtIndex:app.i];
+    speechText.text = speechObj.speechText;
+    
+    UIColor* darkColor = [UIColor colorWithRed:0/255 green:173.0/255 blue:239.0/255 alpha:1.0f];
+    NSString* boldFontName = @"Avenir-Black";
+    
+    self.infoLabel.textColor =  [UIColor darkGrayColor];
+    self.infoLabel.font =  [UIFont fontWithName:boldFontName size:14.0f];
+    self.infoLabel.text = @"Practice presenting using the words below";
+    
+    self.infoView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
+    
+    self.backButton.backgroundColor = darkColor;
+    self.backButton.titleLabel.font = [UIFont fontWithName:boldFontName size:20.0f];
+    [self.backButton setTitle:@"BACK" forState:UIControlStateNormal];
+    [self.backButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [self.backButton setTitleColor:[UIColor colorWithWhite:1.0f alpha:0.5f] forState:UIControlStateHighlighted];
+    
+    app= (AppDelegate *)[[UIApplication sharedApplication]delegate];
+    
+    if(app.camera_in_practice == 0){
+        NSURL* firstUrl = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"blinking_eyes" ofType:@"gif"]];
+        captureImage = [AnimatedGif getAnimationForGifAtUrl: firstUrl];
+        captureImage.frame = CGRectMake(47, 39, 674, 226);
+        [self.view addSubview:captureImage];
+    }
+    else
+    {
+        [self initializeCamera];
+    }
+    
+    app.timerCounter = 0;
+    
+    if(app.secondsToSleepInDouble>0){
+        timer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(showBlackView) userInfo:nil repeats:YES];
+    }
+}
+
+//-(void)viewWillAppear:(BOOL)animated{
+//    if(app.secondsToSleepInDouble>0){
+//        timer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(showBlackView) userInfo:nil repeats:YES];
+//    }
+//}
+
+-(void)showBlackView{
+    
+    app.timerCounter++;
+    NSLog(@"app.timerCounter : %ld" , (long)app.timerCounter);
+    
+    int secondsToSleepInInt = (int)app.secondsToSleepInDouble;
+    
+    if((app.timerCounter % secondsToSleepInInt) == 0){
+        blackView.hidden = NO;
+    }else{
+        blackView.hidden = YES;
+    }
+}
+
+-(void)hideBlackView{
+    blackView.hidden = YES;
+}
+
+//methods for camera
+- (void) initializeCamera {
+    session = [[AVCaptureSession alloc] init];
+	session.sessionPreset = AVCaptureSessionPresetPhoto;
+	
+	AVCaptureVideoPreviewLayer *captureVideoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:session];
+    [captureVideoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
+    
+	captureVideoPreviewLayer.frame = self.imagePreview.bounds;
+	[self.imagePreview.layer addSublayer:captureVideoPreviewLayer];
+	
+    UIView *view = [self imagePreview];
+    CALayer *viewLayer = [view layer];
+    [viewLayer setMasksToBounds:YES];
+    
+    CGRect bounds = [view bounds];
+    [captureVideoPreviewLayer setFrame:bounds];
+    
+    devices = [AVCaptureDevice devices];
+    
+    for (AVCaptureDevice *device in devices) {
+        
+        if ([device hasMediaType:AVMediaTypeVideo]) {
+            
+            if ([device position] == AVCaptureDevicePositionBack) {
+                backCamera = device;
+            }
+            else {
+                frontCamera = device;
+            }
+        }
+    }
+    
+    if (!FrontCamera) {
+        
+        NSError *error = nil;
+        AVCaptureDeviceInput *input = [AVCaptureDeviceInput deviceInputWithDevice:frontCamera error:&error];
+        if (!input) {
+       }
+        [session addInput:input];
+    }
+    
+    if (FrontCamera) {
+        
+        NSError *error = nil;
+        AVCaptureDeviceInput *input = [AVCaptureDeviceInput deviceInputWithDevice:backCamera error:&error];
+       if (!input) {
+        }
+        [session addInput:input];
+    }
+	
+    stillImageOutput = [[AVCaptureStillImageOutput alloc] init];
+    NSDictionary *outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys: AVVideoCodecJPEG, AVVideoCodecKey, nil];
+    [stillImageOutput setOutputSettings:outputSettings];
+    
+    [session addOutput:stillImageOutput];
+    
+	[session startRunning];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+-(IBAction)redirectBackToMenuPage:(id)sender{
+    
+    //stopping timer
+    if (timer != nil)
+    {
+        [timer invalidate];
+        timer = nil;
+    }
+    
+    UIStoryboard *menuViewControllerStoryboard = [UIStoryboard storyboardWithName:@"MenuViewController" bundle:nil];
+    UIViewController *vc = [menuViewControllerStoryboard instantiateViewControllerWithIdentifier:@"MenuViewController"];
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+-(IBAction)redirectBackToSelectSpeechPage:(id)sender{
+    
+    //stopping timer
+    if (timer != nil)
+    {
+        [timer invalidate];
+        timer = nil;
+    }
+    
+    UIStoryboard *SelectSpeechViewControllerStoryboard = [UIStoryboard storyboardWithName:@"SelectSpeechViewController" bundle:nil];
+    UIViewController *vc = [SelectSpeechViewControllerStoryboard instantiateViewControllerWithIdentifier:@"SelectSpeechViewController"];
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+@end

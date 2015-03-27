@@ -1,0 +1,18 @@
+#m1-autismSees-HiddenButton{
+    z-index: 800;
+}
+#m1-autismSees-panel1-scroller{
+    border: 1px solid gray;
+}
+
+#m1-autismSees-html2 {
+    background-color:rgba(255,255,255,0.4);
+    color:#444444;
+    text-align:center;
+    font-size: 64px;
+    font-family: sans-serif;
+    font-weight: 100;
+    font-style: normal;
+    padding:50px;
+    padding-top:60px;
+}

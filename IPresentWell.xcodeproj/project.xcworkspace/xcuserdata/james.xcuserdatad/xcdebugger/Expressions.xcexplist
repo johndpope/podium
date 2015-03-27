@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "-[PracticeViewController showResults:]:PracticeViewController.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "faceForQuestion">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[PracticeViewController viewDidLoad]:PracticeViewController.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.tracker">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
